@@ -1,44 +1,79 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiPlus } from 'react-icons/fi';
-import { Map, TileLayer } from 'react-leaflet';
+import { FiPlus, FiArrowRight } from 'react-icons/fi';
+import { Map, TileLayer, Marker, Popup } from 'react-leaflet';
 
 import '../styles/pages/orphanages-map.css';
 
-import 'leaflet/dist/leaflet.css';
-
 import mapMarkerImg from '../images/map-marker.svg';
+import mapIcon from '../utils/mapIcon';
+import api from '../services/api';
+
+interface Orphanage {
+  id: number,
+  latitude: number,
+  longitude: number,
+  name: string
+}
 
 function OrphanagesMap() {
-    return (
-        <div id="page-map">
-            <aside>
-                <header>
-                    <img src={mapMarkerImg} alt="Happy"/>
+  const [orphanages, setOrphanages] = useState<Orphanage[]>([]);
 
-                    <h2>Escolha um orfanato no mapa</h2>
-                    <p>Muitas crianças estão esperando sua visita :)</p>
-                </header>
+  useEffect(() => {
+    api.get('orphanages').then(response => {
+      setOrphanages(response.data);
+    })
+  }, []);
+  
+  return (
+    <div id="page-map">
+      <aside>
+        <header>
+          <img src={mapMarkerImg} alt="Happy" />
 
-                <footer>
-                    <strong>São José do Rio Preto</strong>
-                    <span>São Paulo</span>
-                </footer>
-            </aside>
+          <h2>Escolha um orfanato no mapa</h2>
+          <p>Muitas crianças estão esperando sua visita :)</p>
+        </header>
 
-            <Map 
-                center={[-20.8093166,-49.3762152]}
-                zoom={13}
-                style={{ width: '100%', height: '100%' }}
+        <footer>
+          <strong>São José do Rio Preto</strong>
+          <span>São Paulo</span>
+        </footer>
+      </aside>
+
+      <Map
+        center={[-20.8093166, -49.3762152]}
+        zoom={13}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <TileLayer url="https://a.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+        {orphanages.map(orphanage => {
+          return (
+            <Marker
+              icon={mapIcon}
+              position={[orphanage.latitude, orphanage.longitude]}
+              key={orphanage.id}
             >
-                <TileLayer url="https://a.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            </Map>
 
-            <Link to="" className="create-orphanage">
-                <FiPlus size={32} color="#FFF" />
-            </Link>
-        </div>
-    );
+              <Popup closeButton={false} minWidth={240} maxWidth={240} className="map-popup">
+                {orphanage.name}
+                <Link to={`/orphanages/${orphanage.id}`}>
+                  <FiArrowRight size={20} color="#FFF" />
+                </Link>
+              </Popup>
+
+            </Marker>
+          )
+        })}
+
+      </Map>
+
+      <Link to="/orphanages/create" className="create-orphanage">
+        <FiPlus size={32} color="#FFF" />
+      </Link>
+    </div>
+  );
 }
 
 export default OrphanagesMap;
